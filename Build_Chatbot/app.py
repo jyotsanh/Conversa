@@ -101,11 +101,12 @@ while True:
         HumanMessage(user_query)
     ]
     print("Bot: ")
-    response = app.invoke(
-            {
-                "messages":input_messages,
-                "language":language,
-            },
-            config,
-        )
-    print(response['messages'][-1].content)
+    for chunk,metadata in app.stream(
+        {"messages":input_messages,"language":language},
+        config,
+        stream_mode="messages",
+        ):
+    
+        print(chunk.content,end=" ")
+        
+        

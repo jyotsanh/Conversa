@@ -21,8 +21,9 @@ prompt_template = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You talk like a Yoda. Answer all questions to the best of your ability.",
+            "You are a helpful assistant. Answer all questions to the best of your ability in {language}.",
         ),
+        # Our application now has two parameters-- the input 'messages' and 'language'
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
@@ -30,18 +31,28 @@ prompt_template = ChatPromptTemplate.from_messages(
 """
 langgraph code
 """
+from typing import Sequence
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
+from typing_extensions import Annotated, TypedDict
 
+class State(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+    language: str
+    
+    
 # Define a new graph
-workflow = StateGraph(state_schema=MessagesState)
+workflow = StateGraph(state_schema=State)
+# workflow = StateGraph(state_schema=MessagesState) -> old workflow 
 
 
 
 
 # Define the function that calls the model
-def call_model(state: MessagesState):
+def call_model(state: State):
     prompt = prompt_template.invoke(state)
     response = model.invoke(prompt)
     return {"messages": response}
@@ -80,6 +91,7 @@ print(response['messages'][-1].pretty_print())
 
 print("press 'q' to exit")
 config = {"configurable": {"thread_id": "abc123"}}
+language = "Nepali"
 while True:
     user_query = input("User: \n")
     if user_query=='q' or user_query=='Q':
@@ -89,5 +101,11 @@ while True:
         HumanMessage(user_query)
     ]
     print("Bot: ")
-    response = app.invoke({"messages":input_messages},config)
-    print(response['messages'][-1].pretty_print())
+    response = app.invoke(
+            {
+                "messages":input_messages,
+                "language":language,
+            },
+            config,
+        )
+    print(response['messages'][-1].content)

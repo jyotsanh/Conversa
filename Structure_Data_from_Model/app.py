@@ -17,86 +17,30 @@ model = ChatGroq(
     )
 
 
-
-'''
-A normal way to invoke the model
-
-
-> messages = [
->    SystemMessage("Translate the following from English into Italian"),
->    HumanMessage("what is the meaning of life?"),
-> ]
-
-> print(model.invoke(messages).content)
-''' 
+from typing import Optional
+from typing_extensions import Annotated, TypedDict
+from pydantic import BaseModel, Field
 
 
-'''
-A invoke the model in streaming way
+# Pydantic
+
+# TypedDict
+class Joke(TypedDict):
+    """Joke to tell user."""
+
+    setup: Annotated[str, ..., "The setup of the joke"]
+
+    # Alternatively, we could have specified setup as:
+
+    # setup: str                    # no default, no description
+    # setup: Annotated[str, ...]    # no default, no description
+    # setup: Annotated[str, "foo"]  # default, no description
+
+    punchline: Annotated[str, ..., "The punchline of the joke"]
+    rating: Annotated[Optional[int], None, "How funny the joke is, from 1 to 10"]
+    
 
 
-> messages = [
->    SystemMessage("Translate the following from English into Italian"),
->    HumanMessage("what is the meaning of life?"),
-> ]
+structured_llm = model.with_structured_output(Joke)
 
-> for token in model.stream(messages):
->   print(token.content, end="|")
-''' 
-# 
-
-
-
-
-"""
-Prompt Templates
-
-"""
-
-
-
-### ChatPrompt Template doc:
-
-
-
-"""
-for dynamic creation of prompt , it creates a prompt like above mentioned
-"""
-from langchain_core.prompts import ChatPromptTemplate
-
-system_template = "Translate the following from English into {language}"
-
-prompt_template = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_template), 
-        ("user", "{text}")
-    ]
-)
-
-final_prompt = prompt_template.invoke({"language": "Italian", "text": "What is the capital of Nepal ?"})
-
-print(f"prompt => \n {final_prompt}")
-
-print(f"model response: \n {model.invoke(final_prompt).content}")
-"""
-@tool
-def multiply(a: int, b: int) -> int:
-    "Multiply a and b."
-    return a * b
-
-# Let's inspect some of the attributes associated with the tool.
-print(multiply.name)
-print(multiply.description)
-print(multiply.args)
-
-model.bind_tools(
-    [
-        
-    ]
-)
-
-"""
-
-
-
-
+print(structured_llm.invoke("Tell me a dad joke "))

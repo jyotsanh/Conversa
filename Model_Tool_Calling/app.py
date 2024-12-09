@@ -55,9 +55,77 @@ def create_database(name: str="database.db") -> str:
     return f"Database '{name}' has been successfully created at {os.path.abspath(name)}."
     
 
+@tool
+def delete_database(name: str="database.db") -> str:
+    """Deletes a database"""
+    try:
+        # Ensure the database file name ends with .db
+        if not name.endswith(".db"):
+            name += ".db"
+        if os.path.exists(name):
+            # Delete the database file
+            os.remove(name)
+            return f"Database '{name}' has been successfully deleted."
+        else:
+            return f"Database '{name}' does not exist in the current directory."
 
+    except Exception as e:
+        # Return error message in case of failure
+        return f"An error occurred while deleting the database: {str(e)}"
 
-tools = [add, multiply, subtract, add_new_user,create_database]
+@tool
+def list_databases() -> str:
+    """Lists all database files in the current directory."""
+    try:
+        # Get all files in the current directory
+        files = os.listdir()
+        # Filter files ending with .db
+        db_files = [file for file in files if file.endswith(".db")]
+
+        if db_files:
+            return f"The current directory contains the following databases: {', '.join(db_files)}"
+        else:
+            return "No database files (.db) were found in the current directory."
+    except Exception as e:
+        return f"An error occurred while listing databases: {str(e)}"
+
+@tool
+def create_table(database_name: str, table_name: str, **columns: dict) -> str:
+    """Creates a new table in the specified database."""
+    try:
+        
+        files = os.listdir()
+        # Filter files ending with .db
+        db_files = [file for file in files if file.endswith(".db")]
+        print(db_files)
+        database_name = database_name.lower() + ".db"
+        if database_name in db_files:
+            conn = sqlite3.connect(database_name)
+            cursor = conn.cursor()
+            print(columns)
+            col = []
+            for column_name, column_type in columns['columns'].items():
+                print(f"Column Name: {column_name}, Column Type: {column_type['type']}")
+                col.append(f"{column_name} {column_type['type']}")
+            col = ", ".join(col)
+            print(col)
+            print("-------------------")
+            cursor.execute(f"""
+                           CREATE TABLE {table_name} (
+                            id INTEGER PRIMARY KEY,
+                            {col},
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """)
+            conn.commit()
+            conn.close()
+            return f"Table '{table_name}' has been successfully created in the database '{database_name}'."
+        else:
+            return f"Database '{database_name}' does not exist in the current directory."
+    except Exception as e:
+        return f"An error occurred while creating the table: {str(e)}"
+
+tools = [add, multiply, subtract, add_new_user, create_database, delete_database, list_databases, create_table]
 
 
 llm_with_tools = model.bind_tools(tools)
@@ -85,11 +153,15 @@ while True:
             "multiply": multiply,
             "subtract": subtract,
             "add_new_user": add_new_user,
-            "create_database": create_database
+            "create_database": create_database,
+            "delete_database": delete_database,
+            "list_databases": list_databases,
+            "create_table": create_table
             }
+        print("Bot: \n")
         selected_tool = tools_dict[tool_call["name"].lower()]
         tool_response = selected_tool.invoke(tool_call)
-        print(tool_response.content)
+        print(f"tool response : {tool_response.content} ")
         message.append(tool_response)
         
     print(llm_with_tools.invoke(message).content)

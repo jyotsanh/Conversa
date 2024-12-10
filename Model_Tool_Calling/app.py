@@ -83,7 +83,7 @@ def list_databases() -> str:
         db_files = [file for file in files if file.endswith(".db")]
 
         if db_files:
-            return f"The current directory contains the following databases: {', '.join(db_files)}"
+            return f"The current directory contains the following databases: \n {', '.join(db_files)}"
         else:
             return "No database files (.db) were found in the current directory."
     except Exception as e:
@@ -106,7 +106,7 @@ def create_table(database_name: str, table_name: str, **columns: dict) -> str:
             col = []
             for column_name, column_type in columns['columns'].items():
                 print(f"Column Name: {column_name}, Column Type: {column_type['type']}")
-                col.append(f"{column_name} {column_type['type']}")
+                col.append(f"{column_name} {column_type['type'].upper()}")
             col = ", ".join(col)
             print(col)
             print("-------------------")
@@ -124,6 +124,10 @@ def create_table(database_name: str, table_name: str, **columns: dict) -> str:
             return f"Database '{database_name}' does not exist in the current directory."
     except Exception as e:
         return f"An error occurred while creating the table: {str(e)}"
+
+
+
+
 
 tools = [add, multiply, subtract, add_new_user, create_database, delete_database, list_databases, create_table]
 
@@ -161,7 +165,7 @@ while True:
         print("Bot: \n")
         selected_tool = tools_dict[tool_call["name"].lower()]
         tool_response = selected_tool.invoke(tool_call)
-        print(f"tool response : {tool_response.content} ")
+        print(f"tool response : \n{tool_response.content} ")
         message.append(tool_response)
         
     print(llm_with_tools.invoke(message).content)
